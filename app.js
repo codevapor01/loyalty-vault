@@ -1080,7 +1080,7 @@ $('btnEraseAll').addEventListener('click', () => {
       <div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div>
       <h2 style="color:var(--danger);font-size:1.3rem;margin-bottom:0.5rem;">Erase All Data?</h2>
       <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.2rem;">
-        This will permanently delete <strong>all bill codes and redemption history</strong>. This is irreversible.
+        This will permanently delete <strong>all customers, bill codes, and redemption history</strong>. This is irreversible.
       </p>
       <div style="display:flex;gap:0.75rem;">
         <button class="btn-outline" style="flex:1;" onclick="closeErasePopup()">Cancel</button>
@@ -1095,12 +1095,18 @@ window.confirmEraseAll = async function() {
   closeErasePopup();
   try {
     const batch = db.batch();
-    const billSnap = await db.collection('billCodes').limit(500).get();
+    const billSnap = await db.collection('billCodes').limit(150).get();
     billSnap.forEach(doc => batch.delete(doc.ref));
-    const histSnap = await db.collection('redemptionHistory').limit(500).get();
+    
+    const histSnap = await db.collection('redemptionHistory').limit(150).get();
     histSnap.forEach(doc => batch.delete(doc.ref));
+    
+    const custSnap = await db.collection('customers').limit(150).get();
+    custSnap.forEach(doc => batch.delete(doc.ref));
+    
     await batch.commit();
     toast('All data erased.');
+    setTimeout(() => window.location.reload(), 1500);
   } catch(err) {
     toast('Error erasing data. Try again.', 'error');
   }
