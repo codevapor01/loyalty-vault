@@ -41,7 +41,6 @@ let modeUsed = false;
 let historyAllData = [];       // In-memory for filter
 let historyFilter = 'ALL';
 let unsubHistory = null;       // onSnapshot unsubscribe
-let unsubCustomers = null;
 let unsubDiscounts = null;
 
 /* ══════════════════════════════════════
@@ -686,7 +685,6 @@ $('formOwnerLogin').addEventListener('submit', async e => {
 
 $('btnOwnerLogout').addEventListener('click', async () => {
   if (unsubHistory) { unsubHistory(); unsubHistory = null; }
-  if (unsubCustomers) { unsubCustomers(); unsubCustomers = null; }
   await auth.signOut();
   currentUser = null; isOwner = false;
   $('ownerEmail').value = '';
@@ -702,7 +700,6 @@ async function loadOwnerDash() {
   await fetchSettings();
   loadSettingsForm();
   startHistoryListener();
-  startCustomersListener();
 }
 
 /* ── Tabs ── */
@@ -982,68 +979,6 @@ function renderHistoryTable() {
   });
 }
 
-/* ══════════════════════════════════════
-   CUSTOMERS TAB — onSnapshot
-   ══════════════════════════════════════ */
-function startCustomersListener() {
-  if (unsubCustomers) unsubCustomers();
-  unsubCustomers = db.collection('customers')
-    .orderBy('joinedAt', 'desc')
-    .limit(100)
-    .onSnapshot(snapshot => {
-      const tbody = $('tbodyCustomers');
-      tbody.innerHTML = '';
-      if (snapshot.empty) { $('noCustomers').classList.remove('hidden'); return; }
-      $('noCustomers').classList.add('hidden');
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const joined = d.joinedAt ? d.joinedAt.toDate().toLocaleDateString() : '—';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td data-label="Name">${d.name || '—'}</td>
-          <td data-label="Phone">${d.phone || '—'}</td>
-          <td data-label="Email" style="font-size:0.82rem;">${d.email || '—'}</td>
-          <td data-label="Joined">${joined}</td>
-          <td data-label="Redemptions">${d.totalRedemptions || 0}</td>
-          <td data-label="Action">
-            <button class="btn-danger btn-sm" onclick="deleteCustomer('${doc.id}','${d.name}')">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }, err => console.error('Customers listener error:', err));
-}
-
-window.deleteCustomer = function (uid, name) {
-  let popup = $('deleteConfirmPopup');
-  if (!popup) { popup = document.createElement('div'); popup.id = 'deleteConfirmPopup'; document.body.appendChild(popup); }
-  popup.className = 'win-popup';
-  popup.innerHTML = `
-    <div class="win-popup-backdrop" onclick="closeDeletePopup()"></div>
-    <div class="win-popup-content" style="max-width:360px;">
-      <div style="font-size:2rem;margin-bottom:0.5rem;">🗑️</div>
-      <h2 style="color:var(--danger);font-size:1.3rem;margin-bottom:0.5rem;">Delete Customer?</h2>
-      <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.2rem;">
-        Permanently delete <strong>${name}</strong>? This cannot be undone.
-      </p>
-      <div style="display:flex;gap:0.75rem;">
-        <button class="btn-outline" style="flex:1;" onclick="closeDeletePopup()">Cancel</button>
-        <button class="btn-danger" style="flex:1;" onclick="confirmDeleteCustomer('${uid}')">Delete</button>
-      </div>
-    </div>
-  `;
-};
-function closeDeletePopup() { const p = $('deleteConfirmPopup'); if (p) p.className = 'win-popup hidden'; }
-window.closeDeletePopup = closeDeletePopup;
-window.confirmDeleteCustomer = async function (uid) {
-  closeDeletePopup();
-  try {
-    await db.collection('customers').doc(uid).delete();
-    toast('Customer deleted.');
-  } catch (err) {
-    toast('Error deleting customer. Try again.', 'error');
-  }
-};
 
 /* ══════════════════════════════════════
    SETTINGS TAB
