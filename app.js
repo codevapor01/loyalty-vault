@@ -108,7 +108,7 @@ $('formCustomerLogin').addEventListener('submit', async e => {
   e.preventDefault();
   const rawName = $('custName').value.trim();
   const rawPhone = $('custPhone').value.trim();
-  const rawKot = $('custKot').value.trim();
+  const rawBaseKot = $('custKot').value.trim();
   const err = $('custLoginError');
   const btn = $('btnCustLoginSubmit');
 
@@ -125,11 +125,18 @@ $('formCustomerLogin').addEventListener('submit', async e => {
     err.classList.remove('hidden');
     return;
   }
-  if (!rawKot) {
+  if (!rawBaseKot) {
     err.textContent = 'Please enter your KOT / Bill Number';
     err.classList.remove('hidden');
     return;
   }
+
+  // Append today's date (DDMMYYYY) to the base KOT
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yyyy = today.getFullYear();
+  const rawKot = rawBaseKot + dd + mm + yyyy;
 
   btn.disabled = true;
   btn.textContent = 'Please wait…';
@@ -712,7 +719,7 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
    ADD BILL CODE
    ══════════════════════════════════════ */
 $('btnAddBillCode').addEventListener('click', async () => {
-  const code = $('newBillCode').value.trim();
+  const baseCode = $('newBillCode').value.trim();
   const phone = $('newBillPhone').value.trim();
   const amount = Number($('newBillAmount').value);
   const msg = $('billCodeAddMsg');
@@ -720,7 +727,7 @@ $('btnAddBillCode').addEventListener('click', async () => {
   msg.className = 'hidden';
   msg.textContent = '';
 
-  if (!code || !phone || !amount) {
+  if (!baseCode || !phone || !amount) {
     msg.textContent = 'Please fill all required fields';
     msg.className = 'error-text';
     return;
@@ -731,6 +738,14 @@ $('btnAddBillCode').addEventListener('click', async () => {
   btn.textContent = 'Adding…';
 
   try {
+    // Auto-generate today's date
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const code = baseCode + dd + mm + yyyy;
+
     const existing = await db.collection('billCodes')
       .where('billCode', '==', code).get();
 
@@ -741,13 +756,6 @@ $('btnAddBillCode').addEventListener('click', async () => {
       btn.textContent = 'Add Bill Code';
       return;
     }
-
-    // Auto-generate today's date in YYYY-MM-DD format
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, '0');
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const yyyy = today.getFullYear();
-    const dateStr = `${yyyy}-${mm}-${dd}`;
 
     await db.collection('billCodes').add({
       billCode: code,
