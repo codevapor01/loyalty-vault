@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Andhra Hotel — Win Discounts!</title>
+  <meta name="description"
+    content="Andhra Hotel — A Multi Cuisine Restaurant. Spin the wheel or scratch a card to win exclusive discounts!" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta property="og:title" content="Andhra Hotel — Win Discounts!" />
+  <meta property="og:description"
+    content="Play Bhagyada Chakram or Malli Raa Baksheesh and win exciting offers at Andhra Hotel!" />
+  <meta property="og:type" content="website" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <!-- UNIFIED SPLASH / LOADING OVERLAY -->
+  <div id="appSplash" class="splash-screen">
+    <div class="splash-inner">
+      <div class="splash-icon">🍽️</div>
+      <h1 class="splash-title">Andhra Hotel</h1>
+      <p class="splash-subtitle" id="splashSubtitle">A Multi Cuisine Restaurant</p>
+      <div class="splash-spinner"></div>
+    </div>
+  </div>
+
+  <!-- BACKGROUND ANIMATION LAYERS -->
+  <div class="grid-overlay"></div>
+  <canvas id="bgCanvas" class="bg-layer"></canvas>
+  <div id="blob3" class="bg-layer blob"></div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ═══════════════════════════════
+       LANDING PAGE
+       ═══════════════════════════════ -->
+  <section id="pageLanding" class="page active">
+    <div class="landing-bg"></div>
+    <div class="container landing-container">
+      <div class="brand">
+        <div class="brand-icon">👑</div>
+        <h1 class="brand-title">LoyaltyVault</h1>
+        <p class="brand-subtitle">Exclusive Restaurant Rewards</p>
+      </div>
+      <div class="cards-row">
+        <div class="login-card" id="btnCustomerLogin" tabindex="0" role="button">
+          <div class="card-icon">👤</div>
+          <h2>Customer</h2>
+          <p>Spin, scratch &amp; win exclusive discounts</p>
+          <span class="card-arrow">→</span>
+        </div>
+      </div>
+      <a class="owner-access-link" id="btnOwnerLogin" href="#">Owner Access</a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       CUSTOMER LOGIN
+       ═══════════════════════════════ -->
+  <section id="pageCustomerLogin" class="page login-page">
+    <div class="lava-blob lava-gold"></div>
+    <div class="lava-blob lava-purple"></div>
+    <div class="lava-blob lava-accent"></div>
+    <div class="container form-container glass-card">
+      <button class="back-btn" id="btnBackFromCustLogin">← Back</button>
+      <div class="form-header">
+        <div class="form-icon">👤</div>
+        <h1>Customer Login</h1>
+        <p>Enter your name and phone to continue</p>
+      </div>
+      <form id="formCustomerLogin" autocomplete="off">
+        <div class="input-group">
+          <label for="custName">Full Name</label>
+          <input type="text" id="custName" placeholder="e.g. John Doe" required />
+        </div>
+        <div class="input-group">
+          <label for="custPhone">Phone Number</label>
+          <input type="tel" id="custPhone" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" required />
+        </div>
+        <p id="custLoginError" class="error-text hidden"></p>
+        <button type="submit" class="btn-primary" id="btnCustLoginSubmit">Continue →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       MODE SELECTION
+       ═══════════════════════════════ -->
+  <section id="pageModeSelect" class="page">
+    <div class="container">
+      <div class="form-header">
+        <div class="form-icon">🎯</div>
+        <h1>Choose Your Reward</h1>
+        <p>Pick one — you can only play once per visit!</p>
+      </div>
+      <div class="cards-row">
+        <div class="mode-card" id="btnModeBhagyada" tabindex="0" role="button">
+          <div class="mode-badge">🎡</div>
+          <h2>Bhagyada Chakram</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">భాగ్యద చక్రం — Wheel of Luck
+          </p>
+          <p>Spin the wheel for instant discounts!</p>
+          <span class="card-arrow">Spin →</span>
+        </div>
+        <div class="mode-card malli-raa-card" id="btnModeMalliRaa" tabindex="0" role="button">
+          <div class="mode-badge">🃏</div>
+          <h2>Malli Raa Baksheesh</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">మళ్ళీ రా బక్షీష్ — Welcome Back
+            Gift</p>
+          <p>Scratch the card to reveal your discount!</p>
+          <span class="card-arrow">Scratch →</span>
+        </div>
+      </div>
+      <div id="noModesMsg" class="empty-state hidden">
+        <span>🔒</span>
+        <p>No modes are currently available. Please visit us again soon!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       BHAGYADA CHAKRAM WHEEL
+       ═══════════════════════════════ -->
+  <section id="pageBhagyadaChakram" class="page">
+    <div class="container wheel-container">
+      <div class="form-header">
+        <div class="form-icon">🎡</div>
+        <h1>Spin the Wheel!</h1>
+        <p>Tap the button and let luck decide</p>
+      </div>
+      <div class="wheel-wrapper">
+        <div class="wheel-pointer">▼</div>
+        <canvas id="wheelCanvas" width="340" height="340"></canvas>
+      </div>
+      <button class="btn-primary btn-spin" id="btnSpin">🎰 SPIN NOW</button>
+      <div id="wheelResult" class="result-box hidden"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       SCRATCH CARD
+       ═══════════════════════════════ -->
+  <section id="pageMalliRaaBaksheesh" class="page">
+    <div class="container scratch-container">
+      <div class="form-header">
+        <div class="form-icon">🃏</div>
+        <h1>Scratch to Reveal!</h1>
+        <p>Scratch the golden card with your finger or mouse</p>
+      </div>
+      <div class="scratch-flipper" id="scratchFlipper">
+        <div class="scratch-front">
+          <div class="scratch-wrapper">
+            <div class="scratch-under" id="scratchUnder">
+              <span class="scratch-discount" id="scratchDiscount">10%</span>
+              <span class="scratch-label">OFF</span>
+            </div>
+            <canvas id="scratchCanvas" width="320" height="200"></canvas>
+          </div>
+        </div>
+        <div class="scratch-back" id="scratchBack">
+          <div class="scratch-reveal-content">
+            <div class="reveal-confetti">🎉</div>
+            <span class="reveal-discount" id="revealDiscount">10%</span>
+            <span class="reveal-label">OFF</span>
+            <span class="reveal-tag">You Won!</span>
+          </div>
+        </div>
+      </div>
+      <div id="scratchResult" class="result-box hidden"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       CUSTOMER DASHBOARD
+       ═══════════════════════════════ -->
+  <section id="pageCustomerDash" class="page">
+    <div class="container">
+      <div class="dash-header">
+        <div>
+          <h1>Welcome, <span id="dashCustName">Customer</span>!</h1>
+          <p class="dash-subtitle">Your rewards &amp; discount history</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn-primary" id="btnPlayGame" style="padding: 0.5rem 1rem; font-size: 0.9rem;">🎮 Play
+            Game</button>
+          <button class="btn-outline" id="btnCustLogout">Logout</button>
+        </div>
+      </div>
+
+      <!-- Profile Section -->
+      <div class="settings-card" style="margin-bottom: 1.5rem;">
+        <div class="section-title"><span>👤</span> My Profile</div>
+        <div id="custProfileInfo"
+          style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:0.75rem;">
+          <div><span style="color:var(--text-muted);font-size:0.8rem;">Name</span>
+            <div id="profileName" style="font-weight:700;color:var(--gold-light);">—</div>
+          </div>
+          <div><span style="color:var(--text-muted);font-size:0.8rem;">Phone</span>
+            <div id="profilePhone" style="font-weight:700;">—</div>
+          </div>
+          <div><span style="color:var(--text-muted);font-size:0.8rem;">Member Since</span>
+            <div id="profileJoined" style="font-weight:700;">—</div>
+          </div>
+          <div><span style="color:var(--text-muted);font-size:0.8rem;">Total Redemptions</span>
+            <div id="profileRedemptions" style="font-weight:700;color:var(--gold);">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Discounts Section -->
+      <div class="section-title"><span>🎟️</span> My Discounts</div>
+      <div class="table-wrapper" style="margin-top:0.75rem;">
+        <table id="tableMyDiscounts">
+          <thead>
+            <tr>
+              <th>Bill Code</th>
+              <th>Bill Amount</th>
+              <th>Discount Given</th>
+              <th>Redeemed On</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyMyDiscounts"></tbody>
+        </table>
+      </div>
+      <div id="noDiscounts" class="empty-state hidden">
+        <span>🎫</span>
+        <p>No discounts yet. Visit us and ask for your discount!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       OWNER LOGIN
+       ═══════════════════════════════ -->
+  <section id="pageOwnerLogin" class="page login-page owner-simple-page">
+    <div class="container form-container solid-card">
+      <button class="back-btn" id="btnBackFromOwnerLogin">← Back</button>
+      <div class="form-header">
+        <h1>Owner Login</h1>
+        <p>Restricted access — authorized personnel only</p>
+      </div>
+      <form id="formOwnerLogin" autocomplete="off">
+        <div class="input-group">
+          <label for="ownerEmail">Email</label>
+          <input type="email" id="ownerEmail" placeholder="owner@andhra.com" required />
+        </div>
+        <div class="input-group">
+          <label for="ownerPass">Password</label>
+          <input type="password" id="ownerPass" placeholder="Enter password" required />
+        </div>
+        <p id="ownerLoginError" class="error-text hidden"></p>
+        <button type="submit" class="btn-primary" id="btnOwnerLoginSubmit">Login →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════
+       OWNER DASHBOARD
+       ═══════════════════════════════ -->
+  <section id="pageOwnerDash" class="page owner-simple-page">
+    <div class="container owner-dash">
+      <div class="dash-header">
+        <div>
+          <h1>Owner Dashboard</h1>
+          <p class="dash-subtitle">Manage your loyalty system</p>
+        </div>
+        <button class="btn-outline" id="btnOwnerLogout">Logout</button>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="tabBillingCodes">Billing Codes</button>
+        <button class="tab-btn" data-tab="tabHistory">History</button>
+        <button class="tab-btn" data-tab="tabCustomers">Customers</button>
+        <button class="tab-btn" data-tab="tabSettings">Settings</button>
+      </div>
+
+      <!-- ── BILLING CODES TAB ── -->
+      <div class="tab-content active" id="tabBillingCodes">
+
+        <!-- Add Bill Code -->
+        <div class="settings-card" style="margin-bottom: 1.5rem;">
+          <div class="section-title">Add New Bill Code</div>
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+            <div class="input-group" style="margin:0;">
+              <label for="newBillCode">Bill Code</label>
+              <input type="text" id="newBillCode" placeholder="e.g. INV#2026/AB-009" />
+            </div>
+            <div class="input-group" style="margin:0;">
+              <label for="newBillCustomerName">Customer Name</label>
+              <input type="text" id="newBillCustomerName" placeholder="Full name" />
+            </div>
+            <div class="input-group" style="margin:0;">
+              <label for="newBillPhone">Phone Number</label>
+              <input type="tel" id="newBillPhone" placeholder="10-digit phone" maxlength="10" />
+            </div>
+            <div class="input-group" style="margin:0;">
+              <label for="newBillAmount">Bill Amount (₹)</label>
+              <input type="number" id="newBillAmount" placeholder="e.g. 850" />
+            </div>
+            <div class="input-group" style="margin:0;">
+              <label for="newBillDate">Bill Date</label>
+              <input type="date" id="newBillDate" />
+            </div>
+          </div>
+          <button class="btn-primary" id="btnAddBillCode" style="margin-top: 1rem;">Add Bill Code</button>
+          <p id="billCodeAddMsg" class="hidden" style="margin-top: 0.5rem; font-size: 0.9rem;"></p>
+        </div>
+
+        <!-- Redeem Section -->
+        <div class="section-title">Redeem Section</div>
+        <div class="input-group" style="margin: 0.75rem 0;">
+          <input type="text" id="searchBillCode" placeholder="Search by bill code, customer name or phone number…"
+            oninput="handleSearch(this.value)" />
+        </div>
+        <div id="redeemResults" style="margin-bottom: 1rem;"></div>
+      </div>
+
+      <!-- ── HISTORY TAB ── -->
+      <div class="tab-content" id="tabHistory">
+        <!-- Summary Cards -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="settings-card" style="text-align:center;padding:1rem;">
+            <div style="font-size:1.8rem;font-weight:800;color:var(--gold);" id="statTotal">0</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Total Codes</div>
+          </div>
+          <div class="settings-card" style="text-align:center;padding:1rem;">
+            <div style="font-size:1.8rem;font-weight:800;color:#4ade80;" id="statUnused">0</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Unused</div>
+          </div>
+          <div class="settings-card" style="text-align:center;padding:1rem;">
+            <div style="font-size:1.8rem;font-weight:800;color:var(--text-muted);" id="statRedeemed">0</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Redeemed</div>
+          </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <button class="tab-btn active" id="filterAll" onclick="applyHistoryFilter('ALL')">All</button>
+          <button class="tab-btn" id="filterUnused" onclick="applyHistoryFilter('UNUSED')">Unused</button>
+          <button class="tab-btn" id="filterRedeemed" onclick="applyHistoryFilter('REDEEMED')">Redeemed</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="tableHistory">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Redeemed At</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyHistory"></tbody>
+          </table>
+        </div>
+        <div id="noHistory" class="empty-state hidden">
+          <p>No bill codes found.</p>
+        </div>
+      </div>
+
+      <!-- ── CUSTOMERS TAB ── -->
+      <div class="tab-content" id="tabCustomers">
+        <div class="section-title">All Customers</div>
+        <div class="table-wrapper">
+          <table id="tableCustomers">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Redemptions</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyCustomers"></tbody>
+          </table>
+        </div>
+        <div id="noCustomers" class="empty-state hidden">
+          <p>No customers yet.</p>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS TAB ── -->
+      <div class="tab-content" id="tabSettings">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="section-title">Discount Levels</div>
+            <div class="input-group"><label for="setDiscount1">Level 1 (%)</label><input type="number" id="setDiscount1"
+                min="1" max="100" value="5" /></div>
+            <div class="input-group"><label for="setDiscount2">Level 2 (%)</label><input type="number" id="setDiscount2"
+                min="1" max="100" value="10" /></div>
+            <div class="input-group"><label for="setDiscount3">Level 3 (%)</label><input type="number" id="setDiscount3"
+                min="1" max="100" value="15" /></div>
+          </div>
+          <div class="settings-card">
+            <div class="section-title">Mode Control</div>
+            <div class="toggle-group">
+              <div class="toggle-info">
+                <strong>Bhagyada Chakram Mode</strong>
+                <span class="toggle-status" id="statusBhagyadaChakram">Enabled</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggleBhagyadaChakram" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-group">
+              <div class="toggle-info">
+                <strong>Malli Raa Baksheesh Mode</strong>
+                <span class="toggle-status" id="statusMalliRaaBaksheesh">Enabled</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggleMalliRaaBaksheesh" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <button class="btn-primary" id="btnSaveSettings" style="margin-top:1.5rem;">Save Settings</button>
+        <div class="danger-zone">
+          <div class="section-title">Danger Zone</div>
+          <p>Erase all customer and coupon data. This is irreversible.</p>
+          <button class="btn-danger" id="btnEraseAll">Erase All Data</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- GLOBAL FOOTER -->
+  <footer class="global-footer">
+    Created by Ankit Kumar Nayak &bull; 7847046689
+  </footer>
+
+  <!-- ═══════════════════════════════
+       FIREBASE SDK (CDN)
+       ═══════════════════════════════ -->
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // ══════════════════════════════════════
+    // FIREBASE CONFIG — Compat SDK (global)
+    // ══════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyAfSOLSVLOFULHnFOEl-zv1k08-jkWfFEk",
+      authDomain: "loyalty-vault-dd624.firebaseapp.com",
+      projectId: "loyalty-vault-dd624",
+      storageBucket: "loyalty-vault-dd624.firebasestorage.app",
+      messagingSenderId: "119743895215",
+      appId: "1:119743895215:web:29f2af43d25645ac78265a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+  </script>
+  <script defer src="app.js"></script>
+</body>
+
+</html>
