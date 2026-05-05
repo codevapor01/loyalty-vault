@@ -142,15 +142,26 @@ $('formCustomerLogin').addEventListener('submit', async e => {
 
   try {
     // 1. Verify KOT exists and matches phone
-    const billSnap = await db.collection('billCodes').where('billCode', '==', rawKot).get();
+    let billSnap = await db.collection('billCodes').where('billCode', '==', rawKot).get();
+    let billDoc = null;
+    
     if (billSnap.empty) {
-      err.textContent = 'Invalid KOT Number. Please check and try again.';
-      err.classList.remove('hidden');
-      btn.disabled = false; btn.textContent = 'Continue →';
-      return;
+      // Fallback for older bills created before date appending was added
+      const fallbackSnap = await db.collection('billCodes').where('billCode', '==', rawBaseKot).get();
+      if (fallbackSnap.empty) {
+        err.textContent = 'Invalid KOT Number. Please check and try again.';
+        err.classList.remove('hidden');
+        btn.disabled = false; btn.textContent = 'Continue →';
+        return;
+      }
+      billDoc = fallbackSnap.docs[0];
+      // Use the actual bill code found in the DB for the rest of the logic
+      window.currentKotNumber = billDoc.data().billCode; 
+    } else {
+      billDoc = billSnap.docs[0];
+      window.currentKotNumber = rawKot;
     }
 
-    const billDoc = billSnap.docs[0];
     const billData = billDoc.data();
 
     if (billData.customerPhone !== rawPhone) {
@@ -200,7 +211,6 @@ $('formCustomerLogin').addEventListener('submit', async e => {
 
     // Save for game results
     window.currentBillDocId = billDoc.id;
-    window.currentKotNumber = rawKot;
 
     // Check if customer exists by phone
     const snap = await db.collection('customers')
