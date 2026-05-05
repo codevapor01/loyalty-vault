@@ -108,6 +108,7 @@ $('formCustomerLogin').addEventListener('submit', async e => {
   e.preventDefault();
   const rawName  = $('custName').value.trim();
   const rawPhone = $('custPhone').value.trim();
+  const rawKot   = $('custKot').value.trim();
   const err      = $('custLoginError');
   const btn      = $('btnCustLoginSubmit');
 
@@ -124,11 +125,56 @@ $('formCustomerLogin').addEventListener('submit', async e => {
     err.classList.remove('hidden');
     return;
   }
+  if (!rawKot) {
+    err.textContent = 'Please enter your KOT / Bill Number';
+    err.classList.remove('hidden');
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Please wait…';
 
   try {
+    // 1. Verify KOT Number and Cooldown
+    const billSnap = await db.collection('billCodes').where('billCode', '==', rawKot).get();
+    if (billSnap.empty) {
+      err.textContent = 'Invalid details. You are not eligible to play.';
+      err.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Continue →';
+      return;
+    }
+    
+    const billDoc = billSnap.docs[0];
+    const billData = billDoc.data();
+    
+    if (billData.customerPhone !== rawPhone) {
+      err.textContent = 'Invalid details. You are not eligible to play.';
+      err.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Continue →';
+      return;
+    }
+    
+    if (billData.hasPlayed && billData.playedAt) {
+      const playedAtDate = billData.playedAt.toDate();
+      const diffMs = Date.now() - playedAtDate.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 10) {
+        const daysLeft = 10 - diffDays;
+        err.textContent = `You have already played. You can play again after ${daysLeft} days.`;
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Continue →';
+        return;
+      }
+    }
+    
+    // Save for game results
+    window.currentBillDocId = billDoc.id;
+    window.currentKotNumber = rawKot;
+
     // Check if customer exists by phone
     const snap = await db.collection('customers')
       .where('phone', '==', rawPhone)
@@ -394,7 +440,16 @@ async function showWheelResult(segment) {
   const resultDiv = $('wheelResult');
   resultDiv.classList.remove('hidden');
   if (segment.discount > 0) {
-    const code = generateCouponCode('BC');
+    try {
+      if (window.currentBillDocId) {
+        await db.collection('billCodes').doc(window.currentBillDocId).update({
+          hasPlayed: true,
+          playedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    } catch (e) { console.error('Failed to update billcode:', e); }
+
+    const code = window.currentKotNumber || generateCouponCode('BC');
     const start = new Date().toLocaleDateString();
     const expiryDate = new Date(Date.now() + 2 * 60 * 60 * 1000);
     const expiry = expiryDate.toLocaleDateString();
@@ -498,7 +553,17 @@ function checkScratchPercent(ctx, w, h) {
 
 async function showScratchResult() {
   if ($('btnPlayGame')) $('btnPlayGame').classList.add('hidden');
-  const code = generateCouponCode('WB');
+  
+  try {
+    if (window.currentBillDocId) {
+      await db.collection('billCodes').doc(window.currentBillDocId).update({
+        hasPlayed: true,
+        playedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  } catch (e) { console.error('Failed to update billcode:', e); }
+
+  const code = window.currentKotNumber || generateCouponCode('WB');
   const start = new Date().toLocaleDateString();
   const expiryDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
   const expiryStr = expiryDate.toLocaleDateString();
@@ -1059,7 +1124,7 @@ window.downloadCouponImage = function(name, phone, discount, code, start, expiry
   draw('Discount', sx, y, '16px sans-serif', '#999999');
   draw(': '+discount+'% OFF', sx+140, y, 'bold 22px sans-serif', '#f5c842');
   y += ls;
-  draw('Coupon Code', sx, y, '16px sans-serif', '#999999');
+  draw('KOT Number', sx, y, '16px sans-serif', '#999999');
   draw(': '+code, sx+140, y, 'bold 18px sans-serif', '#ffffff');
   y += 45;
   draw('Valid From', sx, y, '14px sans-serif', '#999999');
