@@ -135,13 +135,12 @@ $('formCustomerLogin').addEventListener('submit', async e => {
   btn.textContent = 'Please wait…';
 
   try {
-    // 1. Verify KOT Number and Cooldown
+    // 1. Verify KOT exists and matches phone
     const billSnap = await db.collection('billCodes').where('billCode', '==', rawKot).get();
     if (billSnap.empty) {
-      err.textContent = 'Invalid details. You are not eligible to play.';
+      err.textContent = 'Invalid KOT Number. Please check and try again.';
       err.classList.remove('hidden');
-      btn.disabled = false;
-      btn.textContent = 'Continue →';
+      btn.disabled = false; btn.textContent = 'Continue →';
       return;
     }
     
@@ -149,24 +148,46 @@ $('formCustomerLogin').addEventListener('submit', async e => {
     const billData = billDoc.data();
     
     if (billData.customerPhone !== rawPhone) {
-      err.textContent = 'Invalid details. You are not eligible to play.';
+      err.textContent = 'Phone number does not match this KOT.';
       err.classList.remove('hidden');
-      btn.disabled = false;
-      btn.textContent = 'Continue →';
+      btn.disabled = false; btn.textContent = 'Continue →';
       return;
     }
     
-    if (billData.hasPlayed && billData.playedAt) {
-      const playedAtDate = billData.playedAt.toDate();
-      const diffMs = Date.now() - playedAtDate.getTime();
+    // 2. The entered KOT must NOT have been played already
+    if (billData.hasPlayed) {
+      err.textContent = 'This KOT has already been used to play. Please enter a new KOT.';
+      err.classList.remove('hidden');
+      btn.disabled = false; btn.textContent = 'Continue →';
+      return;
+    }
+
+    // 3. Fetch all KOTs for this customer to enforce the global cooldown
+    const allBillsSnap = await db.collection('billCodes').where('customerPhone', '==', rawPhone).get();
+    let latestPlayDate = null;
+    let latestPlayStatus = null;
+    
+    allBillsSnap.forEach(doc => {
+      const d = doc.data();
+      if (d.hasPlayed && d.playedAt) {
+        const pDate = d.playedAt.toDate();
+        if (!latestPlayDate || pDate > latestPlayDate) {
+          latestPlayDate = pDate;
+          latestPlayStatus = d.status; // 'UNUSED' or 'REDEEMED'
+        }
+      }
+    });
+
+    if (latestPlayDate) {
+      const diffMs = Date.now() - latestPlayDate.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       
-      if (diffDays < 10) {
+      // If their last play was < 10 days ago AND it hasn't been redeemed yet
+      if (diffDays < 10 && latestPlayStatus !== 'REDEEMED') {
         const daysLeft = 10 - diffDays;
-        err.textContent = `You have already played. You can play again after ${daysLeft} days.`;
+        err.textContent = `You have an active unused discount! Please redeem it or wait ${daysLeft} days to play again.`;
         err.classList.remove('hidden');
-        btn.disabled = false;
-        btn.textContent = 'Continue →';
+        btn.disabled = false; btn.textContent = 'Continue →';
         return;
       }
     }
