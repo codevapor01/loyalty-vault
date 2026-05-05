@@ -85,7 +85,7 @@ async function fetchSettings() {
         malliRaaBaksheeshEnabled: d.malliRaaBaksheeshEnabled !== false,
       };
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 /* ══════════════════════════════════════
@@ -106,11 +106,11 @@ $('btnBackFromCustLogin').addEventListener('click', () => showPage('pageLanding'
 
 $('formCustomerLogin').addEventListener('submit', async e => {
   e.preventDefault();
-  const rawName  = $('custName').value.trim();
+  const rawName = $('custName').value.trim();
   const rawPhone = $('custPhone').value.trim();
-  const rawKot   = $('custKot').value.trim();
-  const err      = $('custLoginError');
-  const btn      = $('btnCustLoginSubmit');
+  const rawKot = $('custKot').value.trim();
+  const err = $('custLoginError');
+  const btn = $('btnCustLoginSubmit');
 
   err.classList.add('hidden');
 
@@ -143,17 +143,17 @@ $('formCustomerLogin').addEventListener('submit', async e => {
       btn.disabled = false; btn.textContent = 'Continue →';
       return;
     }
-    
+
     const billDoc = billSnap.docs[0];
     const billData = billDoc.data();
-    
+
     if (billData.customerPhone !== rawPhone) {
       err.textContent = 'Phone number does not match this KOT.';
       err.classList.remove('hidden');
       btn.disabled = false; btn.textContent = 'Continue →';
       return;
     }
-    
+
     // 2. The entered KOT must NOT have been played already
     if (billData.hasPlayed) {
       err.textContent = 'This KOT has already been used to play. Please enter a new KOT.';
@@ -166,7 +166,7 @@ $('formCustomerLogin').addEventListener('submit', async e => {
     const allBillsSnap = await db.collection('billCodes').where('customerPhone', '==', rawPhone).get();
     let latestPlayDate = null;
     let latestPlayStatus = null;
-    
+
     allBillsSnap.forEach(doc => {
       const d = doc.data();
       if (d.hasPlayed && d.playedAt) {
@@ -181,7 +181,7 @@ $('formCustomerLogin').addEventListener('submit', async e => {
     if (latestPlayDate) {
       const diffMs = Date.now() - latestPlayDate.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      
+
       // If their last play was < 10 days ago AND it hasn't been redeemed yet
       if (diffDays < 10 && latestPlayStatus !== 'REDEEMED') {
         const daysLeft = 10 - diffDays;
@@ -191,7 +191,7 @@ $('formCustomerLogin').addEventListener('submit', async e => {
         return;
       }
     }
-    
+
     // Save for game results
     window.currentBillDocId = billDoc.id;
     window.currentKotNumber = rawKot;
@@ -248,13 +248,13 @@ async function loadCustomerDash() {
   $('dashCustName').textContent = currentCustomerData.name || 'Customer';
   $('profileName').textContent = currentCustomerData.name || '—';
   $('profilePhone').textContent = currentCustomerData.phone || '—';
-  
+
   if (currentCustomerData.joinedAt && currentCustomerData.joinedAt.toDate) {
     $('profileJoined').textContent = currentCustomerData.joinedAt.toDate().toLocaleDateString();
   } else {
     $('profileJoined').textContent = new Date().toLocaleDateString();
   }
-  
+
   $('profileRedemptions').textContent = currentCustomerData.totalRedemptions || 0;
 
   // Load discount history via onSnapshot
@@ -574,7 +574,7 @@ function checkScratchPercent(ctx, w, h) {
 
 async function showScratchResult() {
   if ($('btnPlayGame')) $('btnPlayGame').classList.add('hidden');
-  
+
   try {
     if (window.currentBillDocId) {
       await db.collection('billCodes').doc(window.currentBillDocId).update({
@@ -778,7 +778,7 @@ $('btnAddBillCode').addEventListener('click', async () => {
    REDEEM SEARCH (DEBOUNCED)
    ══════════════════════════════════════ */
 let debounceTimer;
-window.handleSearch = function(val) {
+window.handleSearch = function (val) {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => searchBills(val), 300);
 };
@@ -846,7 +846,7 @@ function renderRedeemResults(docs, container) {
 }
 
 /* ── Approve Popup ── */
-window.promptApprove = function(docId, name, code) {
+window.promptApprove = function (docId, name, code) {
   let popup = $('approveConfirmPopup');
   if (!popup) { popup = document.createElement('div'); popup.id = 'approveConfirmPopup'; document.body.appendChild(popup); }
   popup.className = 'win-popup';
@@ -873,7 +873,7 @@ function closeApprovePopup() {
 }
 window.closeApprovePopup = closeApprovePopup;
 
-window.confirmApprove = async function(docId, name) {
+window.confirmApprove = async function (docId, name) {
   closeApprovePopup();
   try {
     const docRef = db.collection('billCodes').doc(docId);
@@ -930,9 +930,9 @@ function startHistoryListener() {
     }, err => console.error('History listener error:', err));
 }
 
-window.applyHistoryFilter = function(filter) {
+window.applyHistoryFilter = function (filter) {
   historyFilter = filter;
-  ['filterAll','filterUnused','filterRedeemed'].forEach(id => $(id).classList.remove('active'));
+  ['filterAll', 'filterUnused', 'filterRedeemed'].forEach(id => $(id).classList.remove('active'));
   if (filter === 'ALL') $('filterAll').classList.add('active');
   else if (filter === 'UNUSED') $('filterUnused').classList.add('active');
   else $('filterRedeemed').classList.add('active');
@@ -999,7 +999,7 @@ function startCustomersListener() {
     }, err => console.error('Customers listener error:', err));
 }
 
-window.deleteCustomer = function(uid, name) {
+window.deleteCustomer = function (uid, name) {
   let popup = $('deleteConfirmPopup');
   if (!popup) { popup = document.createElement('div'); popup.id = 'deleteConfirmPopup'; document.body.appendChild(popup); }
   popup.className = 'win-popup';
@@ -1018,14 +1018,14 @@ window.deleteCustomer = function(uid, name) {
     </div>
   `;
 };
-function closeDeletePopup() { const p=$('deleteConfirmPopup'); if(p) p.className='win-popup hidden'; }
+function closeDeletePopup() { const p = $('deleteConfirmPopup'); if (p) p.className = 'win-popup hidden'; }
 window.closeDeletePopup = closeDeletePopup;
-window.confirmDeleteCustomer = async function(uid) {
+window.confirmDeleteCustomer = async function (uid) {
   closeDeletePopup();
   try {
     await db.collection('customers').doc(uid).delete();
     toast('Customer deleted.');
-  } catch(err) {
+  } catch (err) {
     toast('Error deleting customer. Try again.', 'error');
   }
 };
@@ -1082,6 +1082,15 @@ $('btnEraseAll').addEventListener('click', () => {
       <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.2rem;">
         This will permanently delete <strong>all customers, bill codes, and redemption history</strong>. This is irreversible.
       </p>
+      <div class="input-group" style="text-align:left; margin-bottom:0.75rem;">
+        <label for="eraseConfirmEmail" style="color:var(--text-secondary);">Owner Email</label>
+        <input type="email" id="eraseConfirmEmail" placeholder="owner@andhra.com" />
+      </div>
+      <div class="input-group" style="text-align:left; margin-bottom:1rem;">
+        <label for="eraseConfirmPass" style="color:var(--text-secondary);">Password</label>
+        <input type="password" id="eraseConfirmPass" placeholder="Enter password" />
+      </div>
+      <p id="eraseConfirmError" class="error-text hidden" style="margin-bottom:1rem;"></p>
       <div style="display:flex;gap:0.75rem;">
         <button class="btn-outline" style="flex:1;" onclick="closeErasePopup()">Cancel</button>
         <button class="btn-danger" style="flex:1;" onclick="confirmEraseAll()">Erase All</button>
@@ -1089,79 +1098,96 @@ $('btnEraseAll').addEventListener('click', () => {
     </div>
   `;
 });
-function closeErasePopup() { const p=$('eraseConfirmPopup'); if(p) p.className='win-popup hidden'; }
+function closeErasePopup() { const p = $('eraseConfirmPopup'); if (p) p.className = 'win-popup hidden'; }
 window.closeErasePopup = closeErasePopup;
-window.confirmEraseAll = async function() {
-  closeErasePopup();
+window.confirmEraseAll = async function () {
+  const email = $('eraseConfirmEmail').value.trim();
+  const pass = $('eraseConfirmPass').value;
+  const err = $('eraseConfirmError');
+  err.classList.add('hidden');
+
+  if (!email || !pass) {
+    err.textContent = 'Please enter email and password to confirm.';
+    err.classList.remove('hidden');
+    return;
+  }
+
   try {
+    // 1. Re-authenticate to verify credentials
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+
+    // 2. Authentication successful, proceed with erase
+    closeErasePopup();
+
     const batch = db.batch();
     const billSnap = await db.collection('billCodes').limit(150).get();
     billSnap.forEach(doc => batch.delete(doc.ref));
-    
+
     const histSnap = await db.collection('redemptionHistory').limit(150).get();
     histSnap.forEach(doc => batch.delete(doc.ref));
-    
+
     const custSnap = await db.collection('customers').limit(150).get();
     custSnap.forEach(doc => batch.delete(doc.ref));
-    
+
     await batch.commit();
     toast('All data erased.');
     setTimeout(() => window.location.reload(), 1500);
-  } catch(err) {
-    toast('Error erasing data. Try again.', 'error');
+  } catch (err) {
+    err.textContent = 'Invalid email or password. Erase failed.';
+    err.classList.remove('hidden');
   }
 };
 
 /* ══════════════════════════════════════
    COUPON IMAGE DOWNLOAD
    ══════════════════════════════════════ */
-window.downloadCouponImage = function(name, phone, discount, code, start, expiry, source) {
+window.downloadCouponImage = function (name, phone, discount, code, start, expiry, source) {
   const canvas = document.createElement('canvas');
   canvas.width = 600; canvas.height = 380;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-  ctx.translate(canvas.width/2, canvas.height/2);
-  ctx.rotate(-Math.PI/6);
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(-Math.PI / 6);
   ctx.fillStyle = 'rgba(255,255,255,0.04)';
   ctx.font = 'bold 80px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  for (let i=-2;i<=2;i++) for (let j=-2;j<=2;j++) ctx.fillText('ANDHRA HOTEL', i*300, j*100);
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) ctx.fillText('ANDHRA HOTEL', i * 300, j * 100);
   ctx.restore();
   ctx.strokeStyle = '#f5c842'; ctx.lineWidth = 4;
-  ctx.strokeRect(20, 20, canvas.width-40, canvas.height-40);
+  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
   ctx.lineWidth = 1;
-  ctx.strokeRect(26, 26, canvas.width-52, canvas.height-52);
-  const draw = (text, x, y, font, color, align='left') => {
+  ctx.strokeRect(26, 26, canvas.width - 52, canvas.height - 52);
+  const draw = (text, x, y, font, color, align = 'left') => {
     ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(text, x, y);
   };
-  draw('Andhra Hotel', canvas.width/2, 60, 'bold 28px serif', '#f5c842', 'center');
-  draw('A Multi Cuisine Restaurant', canvas.width/2, 90, 'italic 16px serif', '#ffffff', 'center');
-  ctx.beginPath(); ctx.moveTo(40,110); ctx.lineTo(canvas.width-40,110);
+  draw('Andhra Hotel', canvas.width / 2, 60, 'bold 28px serif', '#f5c842', 'center');
+  draw('A Multi Cuisine Restaurant', canvas.width / 2, 90, 'italic 16px serif', '#ffffff', 'center');
+  ctx.beginPath(); ctx.moveTo(40, 110); ctx.lineTo(canvas.width - 40, 110);
   ctx.strokeStyle = '#7c5cfc'; ctx.lineWidth = 2; ctx.stroke();
   const sx = 60; let y = 145; const ls = 30;
   draw('Customer Name', sx, y, '16px sans-serif', '#999999');
-  draw(': '+(name||'—'), sx+140, y, 'bold 16px sans-serif', '#ffffff');
+  draw(': ' + (name || '—'), sx + 140, y, 'bold 16px sans-serif', '#ffffff');
   y += ls;
   draw('Phone Number', sx, y, '16px sans-serif', '#999999');
-  draw(': '+(phone||'—'), sx+140, y, 'bold 16px sans-serif', '#ffffff');
+  draw(': ' + (phone || '—'), sx + 140, y, 'bold 16px sans-serif', '#ffffff');
   y += 40;
   draw('Discount', sx, y, '16px sans-serif', '#999999');
-  draw(': '+discount+'% OFF', sx+140, y, 'bold 22px sans-serif', '#f5c842');
+  draw(': ' + discount + '% OFF', sx + 140, y, 'bold 22px sans-serif', '#f5c842');
   y += ls;
   draw('KOT Number', sx, y, '16px sans-serif', '#999999');
-  draw(': '+code, sx+140, y, 'bold 18px sans-serif', '#ffffff');
+  draw(': ' + code, sx + 140, y, 'bold 18px sans-serif', '#ffffff');
   y += 45;
   draw('Valid From', sx, y, '14px sans-serif', '#999999');
-  draw(': '+start, sx+90, y, '14px sans-serif', '#ffffff');
-  draw('Valid Until', sx+230, y, '14px sans-serif', '#999999');
-  draw(': '+expiry, sx+320, y, '14px sans-serif', '#ffffff');
-  draw('Source: '+source, canvas.width/2, canvas.height-35, 'italic 14px sans-serif', '#7c5cfc', 'center');
+  draw(': ' + start, sx + 90, y, '14px sans-serif', '#ffffff');
+  draw('Valid Until', sx + 230, y, '14px sans-serif', '#999999');
+  draw(': ' + expiry, sx + 320, y, '14px sans-serif', '#ffffff');
+  draw('Source: ' + source, canvas.width / 2, canvas.height - 35, 'italic 14px sans-serif', '#7c5cfc', 'center');
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');
-  a.download = `AndhraHotel_Coupon_${(name||'').replace(/[^a-zA-Z0-9]/g,'')}.png`;
+  a.download = `AndhraHotel_Coupon_${(name || '').replace(/[^a-zA-Z0-9]/g, '')}.png`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 };
 
@@ -1176,39 +1202,39 @@ function initBackgroundAnimation() {
   let h = canvas.height = window.innerHeight;
   const isMobile = window.innerWidth < 480;
   const maxP = isMobile ? 15 : 40;
-  const colors = ['#f5c842','#7c5cfc','rgba(255,255,255,0.6)'];
+  const colors = ['#f5c842', '#7c5cfc', 'rgba(255,255,255,0.6)'];
   class Particle {
     constructor() { this.reset(true); }
-    reset(randomY=false) {
-      this.x = Math.random()*w;
-      this.y = randomY ? Math.random()*h : h+Math.random()*20;
-      this.r = Math.random()*3+1;
-      this.color = colors[Math.floor(Math.random()*colors.length)];
-      this.speedY = Math.random()*0.5+0.1;
-      this.speedX = (Math.random()-0.5)*0.4;
-      this.opacity = Math.random()*0.6+0.2;
+    reset(randomY = false) {
+      this.x = Math.random() * w;
+      this.y = randomY ? Math.random() * h : h + Math.random() * 20;
+      this.r = Math.random() * 3 + 1;
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+      this.speedY = Math.random() * 0.5 + 0.1;
+      this.speedX = (Math.random() - 0.5) * 0.4;
+      this.opacity = Math.random() * 0.6 + 0.2;
     }
     update() {
       this.y -= this.speedY; this.x += this.speedX;
-      if (this.y+this.r<0||this.x>w||this.x<0) this.reset();
+      if (this.y + this.r < 0 || this.x > w || this.x < 0) this.reset();
     }
     draw() {
-      ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
       ctx.fillStyle = this.color; ctx.globalAlpha = this.opacity; ctx.fill();
     }
   }
-  const particles = Array.from({length:maxP}, ()=>new Particle());
+  const particles = Array.from({ length: maxP }, () => new Particle());
   let animFrame, isVisible = !document.hidden;
   function animate() {
     if (!isVisible) return;
-    ctx.clearRect(0,0,w,h);
-    particles.forEach(p=>{p.update();p.draw();});
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => { p.update(); p.draw(); });
     ctx.globalAlpha = 1;
     animFrame = requestAnimationFrame(animate);
   }
   animate();
-  window.addEventListener('resize', ()=>{ w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; });
-  document.addEventListener('visibilitychange', ()=>{
+  window.addEventListener('resize', () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; });
+  document.addEventListener('visibilitychange', () => {
     isVisible = !document.hidden;
     if (isVisible) animate(); else cancelAnimationFrame(animFrame);
   });
@@ -1219,7 +1245,7 @@ function initBackgroundAnimation() {
    ══════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
   initBackgroundAnimation();
-  try { await fetchSettings(); } catch(_) {}
+  try { await fetchSettings(); } catch (_) { }
   const splash = $('appSplash');
   if (splash) splash.classList.add('fade-out');
 });
