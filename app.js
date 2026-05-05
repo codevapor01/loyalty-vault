@@ -713,16 +713,14 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
    ══════════════════════════════════════ */
 $('btnAddBillCode').addEventListener('click', async () => {
   const code = $('newBillCode').value.trim();
-  const name = $('newBillCustomerName').value.trim();
   const phone = $('newBillPhone').value.trim();
   const amount = Number($('newBillAmount').value);
-  const date = $('newBillDate').value;
   const msg = $('billCodeAddMsg');
 
   msg.className = 'hidden';
   msg.textContent = '';
 
-  if (!code || !name || !phone || !amount || !date) {
+  if (!code || !phone || !amount) {
     msg.textContent = 'Please fill all required fields';
     msg.className = 'error-text';
     return;
@@ -739,18 +737,29 @@ $('btnAddBillCode').addEventListener('click', async () => {
     if (!existing.empty) {
       msg.textContent = 'This bill code already exists';
       msg.className = 'error-text';
+      btn.disabled = false;
+      btn.textContent = 'Add Bill Code';
       return;
     }
+
+    // Auto-generate today's date in YYYY-MM-DD format
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const dateStr = `${yyyy}-${mm}-${dd}`;
 
     await db.collection('billCodes').add({
       billCode: code,
       billCode_lower: code.toLowerCase(),
-      customerName: name,
-      customerName_lower: name.toLowerCase(),
+      customerName: 'Customer',
+      customerName_lower: 'customer',
       customerPhone: phone,
       billAmount: amount,
-      billDate: date,
+      billDate: dateStr,
       status: 'UNUSED',
+      hasPlayed: false,
+      playedAt: null,
       redeemedAt: null,
       approvedBy: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -759,10 +768,8 @@ $('btnAddBillCode').addEventListener('click', async () => {
     msg.textContent = 'Bill code added successfully';
     msg.className = 'success-text';
     $('newBillCode').value = '';
-    $('newBillCustomerName').value = '';
     $('newBillPhone').value = '';
     $('newBillAmount').value = '';
-    $('newBillDate').value = '';
 
   } catch (err) {
     console.error(err);
