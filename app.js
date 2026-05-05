@@ -130,46 +130,39 @@ $('formCustomerLogin').addEventListener('submit', async e => {
     return;
   }
 
-  // Append today's date (DDMMYYYY) to the base KOT
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yyyy = today.getFullYear();
-  const rawKot = rawBaseKot + dd + mm + yyyy;
-
   btn.disabled = true;
   btn.textContent = 'Please wait…';
 
   try {
-    // 1. Verify KOT exists and matches phone
-    let billSnap = await db.collection('billCodes').where('billCode', '==', rawKot).get();
-    let billDoc = null;
+    // 1. Fetch bills for this phone number
+    const allPhoneBillsSnap = await db.collection('billCodes').where('customerPhone', '==', rawPhone).get();
     
-    if (billSnap.empty) {
-      // Fallback for older bills created before date appending was added
-      const fallbackSnap = await db.collection('billCodes').where('billCode', '==', rawBaseKot).get();
-      if (fallbackSnap.empty) {
-        err.textContent = 'Invalid KOT Number. Please check and try again.';
-        err.classList.remove('hidden');
-        btn.disabled = false; btn.textContent = 'Continue →';
-        return;
+    let billDoc = null;
+    let billData = null;
+
+    // 2. Find the bill that matches the entered KOT
+    // It can match exactly (e.g. older bills)
+    // Or it can match the KOT + 8-digit date suffix (e.g. newly created bills)
+    allPhoneBillsSnap.forEach(doc => {
+      const d = doc.data();
+      const isExactMatch = d.billCode === rawBaseKot;
+      const isDateMatch = d.billCode.startsWith(rawBaseKot) && d.billCode.length === (rawBaseKot.length + 8);
+      
+      if (isExactMatch || isDateMatch) {
+        billDoc = doc;
+        billData = d;
       }
-      billDoc = fallbackSnap.docs[0];
-      // Use the actual bill code found in the DB for the rest of the logic
-      window.currentKotNumber = billDoc.data().billCode; 
-    } else {
-      billDoc = billSnap.docs[0];
-      window.currentKotNumber = rawKot;
-    }
+    });
 
-    const billData = billDoc.data();
-
-    if (billData.customerPhone !== rawPhone) {
-      err.textContent = 'Phone number does not match this KOT.';
+    if (!billDoc) {
+      err.textContent = 'Invalid KOT Number or Phone Number. Please check and try again.';
       err.classList.remove('hidden');
       btn.disabled = false; btn.textContent = 'Continue →';
       return;
     }
+
+    // Save the fully matched bill code (including date if present) for the rest of the logic
+    window.currentKotNumber = billData.billCode;
 
     // 2. The entered KOT must NOT have been played already
     if (billData.hasPlayed) {
