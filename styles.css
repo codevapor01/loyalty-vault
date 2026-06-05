@@ -1052,35 +1052,62 @@ input:checked + .slider:before {
   to { transform: rotate(360deg); }
 }
 
- / *   P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%
-       O W N E R   S I M P L E   U I   O V E R R I D E S 
-       P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%P%  * / 
- . o w n e r - s i m p l e - p a g e   { 
-     b a c k g r o u n d :   # 1 1 1   ! i m p o r t a n t ; 
- } 
- 
- . o w n e r - s i m p l e - p a g e   ~   # b g C a n v a s , 
- . o w n e r - s i m p l e - p a g e   ~   . b l o b , 
- . o w n e r - s i m p l e - p a g e   ~   . g r i d - o v e r l a y   { 
-     d i s p l a y :   n o n e   ! i m p o r t a n t ; 
- } 
- 
- . s o l i d - c a r d   { 
-     b a c k g r o u n d :   # 1 8 1 8 1 f   ! i m p o r t a n t ; 
-     b o r d e r :   1 p x   s o l i d   # 3 3 3   ! i m p o r t a n t ; 
-     b a c k d r o p - f i l t e r :   n o n e   ! i m p o r t a n t ; 
-     b o x - s h a d o w :   0   1 0 p x   3 0 p x   r g b a ( 0 , 0 , 0 , 0 . 5 )   ! i m p o r t a n t ; 
- } 
-  
- 
- b o d y . o w n e r - u i   # b g C a n v a s , 
- b o d y . o w n e r - u i   . b l o b , 
- b o d y . o w n e r - u i   . g r i d - o v e r l a y   { 
-     d i s p l a y :   n o n e   ! i m p o r t a n t ; 
- } 
- 
- b o d y . o w n e r - u i   { 
-     b a c k g r o u n d :   # 1 1 1   ! i m p o r t a n t ; 
- } 
-  
- 
+/* ═══════════════════════════════════════════
+   OWNER SIMPLE UI OVERRIDES
+   ═══════════════════════════════════════════ */
+.owner-simple-page {
+  background: #111 !important;
+}
+
+.owner-simple-page ~ #bgCanvas,
+.owner-simple-page ~ .blob,
+.owner-simple-page ~ .grid-overlay {
+  display: none !important;
+}
+
+.solid-card {
+  background: #18181f !important;
+  border: 1px solid #333 !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+
+body.owner-ui #bgCanvas,
+body.owner-ui .blob,
+body.owner-ui .grid-overlay {
+  display: none !important;
+}
+
+body.owner-ui {
+  background: #111 !important;
+}
+
+/* ═══════════════════════════════════════════
+   PASSWORD VISIBILITY TOGGLE
+   ═══════════════════════════════════════════ */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.password-wrapper input {
+  padding-right: 2.75rem !important; /* Make room for the toggle button */
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.15rem;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.password-toggle-btn:hover {
+  color: var(--gold);
+}

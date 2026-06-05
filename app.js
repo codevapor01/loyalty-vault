@@ -44,29 +44,9 @@ let unsubHistory = null;       // onSnapshot unsubscribe
 let unsubDiscounts = null;
 
 /* ══════════════════════════════════════
-   AUTH STATE — Session Management
+   AUTH STATE — Local Session Management
    ══════════════════════════════════════ */
-auth.onAuthStateChanged(async user => {
-  // Only owners use Firebase Auth now
-  if (user) {
-    try {
-      const ownerDoc = await db.collection('owners').doc(user.uid).get();
-      if (ownerDoc.exists) {
-        currentUser = user;
-        isOwner = true;
-        await loadOwnerDash();
-      } else {
-        await auth.signOut();
-      }
-    } catch (_) { }
-  } else {
-    if (isOwner) {
-      currentUser = null;
-      isOwner = false;
-      showPage('pageLanding');
-    }
-  }
-});
+// Firebase Auth has been removed. LocalStorage manages owner session persistence.
 
 /* ══════════════════════════════════════
    SETTINGS — Firestore
@@ -663,40 +643,51 @@ window.loadCustomerDash = loadCustomerDash;
    ══════════════════════════════════════ */
 $('btnBackFromOwnerLogin').addEventListener('click', () => showPage('pageLanding'));
 
+$('btnToggleOwnerPass').addEventListener('click', () => {
+  const passInput = $('ownerPass');
+  const toggleBtn = $('btnToggleOwnerPass');
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    toggleBtn.textContent = '🙈';
+  } else {
+    passInput.type = 'password';
+    toggleBtn.textContent = '👁️';
+  }
+});
+
 $('formOwnerLogin').addEventListener('submit', async e => {
   e.preventDefault();
   const email = $('ownerEmail').value.trim();
-  const pass = $('ownerPass').value;
+  const pass = $('ownerPass').value.trim();
   const btn = $('btnOwnerLoginSubmit');
   const err = $('ownerLoginError');
   err.classList.add('hidden');
   btn.disabled = true;
   btn.textContent = 'Logging in…';
-  try {
-    const cred = await auth.signInWithEmailAndPassword(email, pass);
-    const ownerDoc = await db.collection('owners').doc(cred.user.uid).get();
-    if (!ownerDoc.exists) {
-      await auth.signOut();
-      err.textContent = 'Access denied. This account is not an owner account.';
-      err.classList.remove('hidden');
-      return;
-    }
-    currentUser = cred.user;
+  
+  const isCorrectEmail = email.toLowerCase() === 'andhrahotel@gmail.com';
+  const isCorrectPass = pass === 'Andhra@12' || pass.toLowerCase() === 'andhra@12';
+  
+  if (isCorrectEmail && isCorrectPass) {
+    localStorage.setItem('ownerLoggedIn', 'true');
+    currentUser = { email: 'Andhrahotel@gmail.com', uid: 'owner' };
     isOwner = true;
     await loadOwnerDash();
-  } catch (_) {
+    btn.disabled = false;
+    btn.textContent = 'Login →';
+  } else {
     err.textContent = 'Invalid email or password';
     err.classList.remove('hidden');
-  } finally {
     btn.disabled = false;
     btn.textContent = 'Login →';
   }
 });
 
-$('btnOwnerLogout').addEventListener('click', async () => {
+$('btnOwnerLogout').addEventListener('click', () => {
   if (unsubHistory) { unsubHistory(); unsubHistory = null; }
-  await auth.signOut();
-  currentUser = null; isOwner = false;
+  localStorage.removeItem('ownerLoggedIn');
+  currentUser = null;
+  isOwner = false;
   $('ownerEmail').value = '';
   $('ownerPass').value = '';
   showPage('pageLanding');
@@ -1048,7 +1039,10 @@ $('btnEraseAll').addEventListener('click', () => {
       </div>
       <div class="input-group" style="text-align:left; margin-bottom:1rem;">
         <label for="eraseConfirmPass" style="color:var(--text-secondary);">Password</label>
-        <input type="password" id="eraseConfirmPass" placeholder="Enter password" />
+        <div class="password-wrapper">
+          <input type="password" id="eraseConfirmPass" placeholder="Enter password" />
+          <button type="button" class="password-toggle-btn" id="btnToggleErasePass" aria-label="Toggle Password Visibility">👁️</button>
+        </div>
       </div>
       <p id="eraseConfirmError" class="error-text hidden" style="margin-bottom:1rem;"></p>
       <div style="display:flex;gap:0.75rem;">
@@ -1057,26 +1051,44 @@ $('btnEraseAll').addEventListener('click', () => {
       </div>
     </div>
   `;
+
+  $('btnToggleErasePass').addEventListener('click', () => {
+    const passInput = $('eraseConfirmPass');
+    const toggleBtn = $('btnToggleErasePass');
+    if (passInput.type === 'password') {
+      passInput.type = 'text';
+      toggleBtn.textContent = '🙈';
+    } else {
+      passInput.type = 'password';
+      toggleBtn.textContent = '👁️';
+    }
+  });
 });
 function closeErasePopup() { const p = $('eraseConfirmPopup'); if (p) p.className = 'win-popup hidden'; }
 window.closeErasePopup = closeErasePopup;
 window.confirmEraseAll = async function () {
   const email = $('eraseConfirmEmail').value.trim();
-  const pass = $('eraseConfirmPass').value;
-  const err = $('eraseConfirmError');
-  err.classList.add('hidden');
+  const pass = $('eraseConfirmPass').value.trim();
+  const errorEl = $('eraseConfirmError');
+  errorEl.classList.add('hidden');
 
   if (!email || !pass) {
-    err.textContent = 'Please enter email and password to confirm.';
-    err.classList.remove('hidden');
+    errorEl.textContent = 'Please enter email and password to confirm.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  const isCorrectEmail = email.toLowerCase() === 'andhrahotel@gmail.com';
+  const isCorrectPass = pass === 'Andhra@12' || pass.toLowerCase() === 'andhra@12';
+
+  if (!isCorrectEmail || !isCorrectPass) {
+    errorEl.textContent = 'Invalid email or password. Erase failed.';
+    errorEl.classList.remove('hidden');
     return;
   }
 
   try {
-    // 1. Re-authenticate to verify credentials
-    await firebase.auth().signInWithEmailAndPassword(email, pass);
-
-    // 2. Authentication successful, proceed with erase
+    // Credentials verified locally, proceed with erase
     closeErasePopup();
 
     const batch = db.batch();
@@ -1092,9 +1104,9 @@ window.confirmEraseAll = async function () {
     await batch.commit();
     toast('All data erased.');
     setTimeout(() => window.location.reload(), 1500);
-  } catch (err) {
-    err.textContent = 'Invalid email or password. Erase failed.';
-    err.classList.remove('hidden');
+  } catch (ex) {
+    console.error('Erase all data failed:', ex);
+    toast('Connection error. Erase failed.', 'error');
   }
 };
 
@@ -1206,6 +1218,18 @@ function initBackgroundAnimation() {
 document.addEventListener('DOMContentLoaded', async () => {
   initBackgroundAnimation();
   try { await fetchSettings(); } catch (_) { }
+  
+  // Restore owner login session from localStorage if present
+  if (localStorage.getItem('ownerLoggedIn') === 'true') {
+    currentUser = { email: 'Andhrahotel@gmail.com', uid: 'owner' };
+    isOwner = true;
+    try {
+      await loadOwnerDash();
+    } catch (err) {
+      console.error('Failed to load owner dashboard on startup:', err);
+    }
+  }
+
   const splash = $('appSplash');
   if (splash) splash.classList.add('fade-out');
 });

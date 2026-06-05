@@ -24,34 +24,11 @@ Go to [Firebase Console](https://console.firebase.google.com) → Your Project.
 3. Choose **Production mode**
 4. Select your region → Done
 
-### Enable Authentication
-1. Sidebar → **Authentication** → **Sign-in method**
-2. Enable **Email/Password** provider → Save
-
 ---
 
-## STEP 3: Create Owner Account
+## STEP 3: Firestore Security Rules
 
-Owners cannot self-register — you must create them manually.
-
-1. Go to **Authentication** → **Users** → **Add user**
-2. Enter owner email & password
-3. Copy the **User UID** shown in the table
-
-Then go to **Firestore Database** → **Start collection**:
-- Collection ID: `owners`
-- Document ID: paste the **User UID**
-- Add fields:
-  - `name` → string → `Ankit Kumar Nayak`
-  - `email` → string → owner email
-  - `role` → string → `admin`
-  - `createdAt` → timestamp → now
-
-> ⚠️ Only users with a document in the `owners` collection can access the Owner Dashboard.
-
----
-
-## STEP 4: Firestore Security Rules
+Since Firebase Authentication is removed and owner logins are validated locally, Firestore must be configured to allow unauthenticated read and write access.
 
 Go to **Firestore Database** → **Rules** and paste:
 
@@ -59,28 +36,16 @@ Go to **Firestore Database** → **Rules** and paste:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /billCodes/{doc} {
-      allow read, write: if request.auth != null;
-    }
-    match /customers/{doc} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == resource.id || request.auth != null;
-    }
-    match /redemptionHistory/{doc} {
-      allow read, write: if request.auth != null;
-    }
-    match /settings/{doc} {
-      allow read, write: if request.auth != null;
-    }
-    match /owners/{doc} {
-      allow read: if request.auth != null;
-      allow write: if false; // only via console
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
 ```
 
 Click **Publish**.
+
+> ⚠️ Note: These rules allow public read/write access to your database because Firebase Authentication has been disabled as requested.
 
 ---
 
@@ -156,7 +121,6 @@ const firebaseConfig = {
 | Error | Fix |
 |-------|-----|
 | `firebase is not defined` | Make sure compat CDN scripts load before app.js |
-| `Missing permissions` | Check Firestore Rules are published |
-| `Owner access denied` | Make sure UID exists in `owners` collection |
-| `Auth domain not authorized` | Add Vercel URL to Firebase Auth authorized domains |
-| Customer can't login | Ensure phone is 10 digits and name is >1 char (no email/pass needed) |
+| `Missing permissions` | Check Firestore Rules are published and allow public access |
+| Owner can't login | Use email `Andhrahotel@gmail.com` and password `Andhra@12` |
+| Customer can't login | Ensure phone is 10 digits and name is >1 char |
